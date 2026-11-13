@@ -34,6 +34,11 @@ public class PartitionedOrderTasklet implements Tasklet {
     @Value("#{jobParameters['runDate']}")
     private String runDate;
 
+
+    @Value("#{jobParameters['failPartition']}")
+    private String failPartition;
+
+
     private final JdbcTemplate jdbcTemplate;
 
     public PartitionedOrderTasklet(JdbcTemplate jdbcTemplate) {
@@ -45,6 +50,10 @@ public class PartitionedOrderTasklet implements Tasklet {
         log.info("Partition -> {}, Thread Id-> {}, minId -> {}, maxId -> {}" , partitionName, Thread.currentThread().getName(),minId,maxId);
 
         try {
+
+            if(failPartition.equals(partitionName)) {
+                throw new IllegalStateException("Partition " + partitionName + " failed intentionally.");
+            }
 
             // Daha önceki kayıtları silmek lazım -> Eksik
            jdbcTemplate.update(

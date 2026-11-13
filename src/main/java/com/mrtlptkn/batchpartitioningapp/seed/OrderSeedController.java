@@ -14,11 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderSeedController {
 
     private final OrderSeed orderSeed;
-    private final OrderRangePartioner partitionHandler;
 
-    public OrderSeedController(OrderSeed orderSeed, OrderRangePartioner partitionHandler) {
+
+    public OrderSeedController(OrderSeed orderSeed) {
         this.orderSeed = orderSeed;
-        this.partitionHandler = partitionHandler;
     }
 
 
@@ -28,12 +27,6 @@ public class OrderSeedController {
         return ResponseEntity.ok("Seed completed successfully." + writtenCount);
     }
 
-    @PostMapping("/partitionTest")
-    public ResponseEntity<String> test(@RequestParam("gridSize") int gridSize){
-        var response =  partitionHandler.partition(gridSize);
 
-        return ResponseEntity.ok("Partition test completed successfully." + response);
-
-    }
 
 }
