@@ -44,10 +44,14 @@ public class PartitionedOrderTasklet implements Tasklet {
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
         log.info("Partition -> {}, Thread Id-> {}, minId -> {}, maxId -> {}" , partitionName, Thread.currentThread().getName(),minId,maxId);
 
-        // Daha önceki kayıtları silmek lazım -> Eksik
-
         try {
-            int written = jdbcTemplate.update("INSERT INTO customer_totals (run_date,customer,partition_name,total_amount)" + "SELECT CAST(? AS DATE), customer, CAST(? AS VARCHAR(50)), SUM(amount)" + "FROM Orders WHERE order_id BETWEEN ? AND ?"+ "AND order_date = CAST(? AS DATE) GROUP BY customer",runDate,partitionName,minId,maxId,runDate);
+
+            // Daha önceki kayıtları silmek lazım -> Eksik
+           jdbcTemplate.update(
+                    "DELETE FROM customer_totals WHERE run_date = CAST(? AS DATE) AND partition_name = ?", runDate, partitionName);
+
+            // Rapor oluşturma
+            int written = jdbcTemplate.update("INSERT INTO customer_totals (run_date, customer, partition_name, total_amount) " + "SELECT CAST(? AS DATE), customer, CAST(? AS VARCHAR(50)), SUM(amount) " + "FROM orders WHERE order_id BETWEEN ? AND ? " + "AND order_date = CAST(? AS DATE) GROUP BY customer",runDate,partitionName,minId,maxId,runDate);
 
             // Sayaçlar manuel
             contribution.incrementWriteCount(written); // Sayaçların ne kadar kayıt işlediği
