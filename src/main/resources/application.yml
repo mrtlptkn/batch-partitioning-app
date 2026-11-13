@@ -27,5 +27,5 @@ batch:
     grid-size: 10                    # Kaç parçaya bölüneceği
   schedule:
     enabled: false                  # true yapınca @Scheduled görevi aktif olur
-    cron: "0 0 2 * * *"             # Her gece 02:00 (saniye dakika saat gün ay haftanın-günü) 0 * * * * * her dakika çalışır
+    cron: "0 * * * * *"             # Her gece 02:00 (saniye dakika saat gün ay haftanın-günü) 0 * * * * * her dakika çalışır
 
