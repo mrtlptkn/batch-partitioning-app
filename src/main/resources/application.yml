@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: batch-partitioning-app
+  datasource:
+    # Bu proje kendi H2 dosyasını kullanır: eski projelerle karışmaz
+    url: jdbc:h2:file:./data/partitionbatch;AUTO_SERVER=TRUE
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true                 # http://localhost:8080/h2-console
+      path: /h2-console
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:sql/schema.sql
+  batch:
+    job:
+      enabled: false                # Job'ları açılışta çalıştırmıyoruz; controller ve scheduler tetikler
+    jdbc:
+      # İlk çalıştırmada BATCH_* tablolarını oluşturur.
+      # Uygulama ikinci kez başlatılırken hata alırsanız 'never' yapın.
+      initialize-schema: always
+
+batch:
+  partition:
+    grid-size: 4                    # Kaç parçaya bölüneceği
+  schedule:
+    enabled: false                  # true yapınca @Scheduled görevi aktif olur
+    cron: "0 0 2 * * *"             # Her gece 02:00 (saniye dakika saat gün ay haftanın-günü) 0 * * * * * her dakika çalışır
+
