@@ -2,12 +2,16 @@ package com.mrtlptkn.batchpartitioningapp.job;
 
 import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.item.ExecutionContext;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 
 // Bu algoritma üzerinden PartitionHandler kaç adet WorkerStep işlemi böleceği bulur ve Her bir işi
 // sub step olara split eder.
-public class OrderRangePartioner implements Partitioner {
+@Component
+public class OrderRangePartioner implements Partitioner  {
 
     // Aylık Bazlı Partition Yapıyorsak -> Grid Size: 12
     // Her bir ay için bir partition 12 partition
@@ -28,9 +32,39 @@ public class OrderRangePartioner implements Partitioner {
 
     // Hiç kuyruklama olmasın her partition kendi Thread ile çalışsın istersek bu durumda zaten YukarıYuvarla Algoritması yeterli.
 
+    private final JdbcTemplate jdbcTemplate;
 
-    @Override
+    public OrderRangePartioner(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
     public Map<String, ExecutionContext> partition(int gridSize) {
-        return null;
+
+        Map<String,ExecutionContext> partitions = new HashMap<>();
+
+        Long min = jdbcTemplate.queryForObject("SELECT MIN(order_id) FROM orders", Long.class);
+        Long max = jdbcTemplate.queryForObject("SELECT MAX(order_id) FROM orders", Long.class);
+
+        if(min == null || max == null){ // hiçbir worker çalışmaz
+            return partitions;
+        }
+
+        int index = 0;
+        long totalRecordsCount = max - min + 1;
+        long idSize = (long)Math.ceil((double)totalRecordsCount / gridSize);
+
+        for (long start = min; start <= max; start += idSize, index++) {
+            long end = Math.min(start + idSize - 1, max); // 1 ile 125.000 -> 125.000: 250.000 -> 250:375
+
+            String name = "partition" + index;
+            ExecutionContext context = new ExecutionContext();
+            context.putLong("minId", start); // 1
+            context.putLong("maxId",end); // 125.000
+            context.putString("partitionName", name);
+            partitions.put(name, context);
+        }
+
+
+        return partitions;
     }
 }
